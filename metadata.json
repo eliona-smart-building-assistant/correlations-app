@@ -1,0 +1,19 @@
+{
+    "name": "Correlation",
+    "elionaMinVersion": "v11.0.0",  
+     "displayName": {
+       "en": "correlation app",
+       "de": "Korrelations-App"
+     },
+     "description": {
+       "en": "This app provides a correlation analysis.",
+       "de": "Diese App bietet eine Korrelationsanalyse."
+     },
+     "dashboardTemplateNames": [
+       "correlation"
+     ],
+     "apiUrl": "v1",
+     "apiSpecificationPath": "/version/openapi.json",
+     "documentationUrl": "https://doc.eliona.io/eliona/referenzen/app-entwicklung",
+     "useEnvironment": [ "CONNECTION_STRING", "API_ENDPOINT", "API_TOKEN" ]
+   }

@@ -2,16 +2,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 import base64
 import io
 import os
 
 
-def create_best_correlation_heatmap(correlations_dict, output_file="heatmap.png"):
+def create_best_correlation_heatmap(correlations_dict, output_file="/tmp/heatmap.png"):
     """
     Creates a heatmap from the 'best_correlation' values in correlations_dict.
-    In addition to correlation, each cell is annotated with the best_lag and lag_unit.
     Saves the resulting figure to 'output_file' instead of showing it.
 
     The input 'correlations_dict' is expected to look like:
@@ -28,7 +26,6 @@ def create_best_correlation_heatmap(correlations_dict, output_file="heatmap.png"
 
     Only the best_correlation field is used for coloring the heatmap
     (pairs with None or NaN are left blank).
-    The annotation in each cell will display correlation + lag info if available.
     """
     # 1) Gather all columns (col1, col2) by splitting each key on " and "
     all_cols = set()
@@ -48,43 +45,31 @@ def create_best_correlation_heatmap(correlations_dict, output_file="heatmap.png"
     # Convert the set of columns to a sorted list (for consistent ordering)
     all_cols = sorted(all_cols)
 
-    # 2) Initialize an NxN DataFrame for numeric correlation and a second for text annotations
+    # 2) Initialize an NxN DataFrame for numeric correlation
     df_matrix = pd.DataFrame(np.nan, index=all_cols, columns=all_cols)
-    df_annot = pd.DataFrame("", index=all_cols, columns=all_cols)
 
-    # 3) Fill in the best correlations and annotations
+    # 3) Fill in the best correlations
     for col1, col2, best_corr, best_lag, best_lag_unit in data_for_matrix:
         if best_corr is not None and not np.isnan(best_corr):
             df_matrix.loc[col1, col2] = best_corr
             df_matrix.loc[col2, col1] = best_corr
 
-            corr_str = f"{best_corr:.2f}"
-            if best_lag_unit and best_lag != 0:
-                annotation = f"{corr_str}\n({best_lag} {best_lag_unit})"
-            else:
-                annotation = corr_str
-
-            df_annot.loc[col1, col2] = annotation
-            df_annot.loc[col2, col1] = annotation
-
-    # (Optional) Set diagonal to 1.0 correlation, with a simple annotation like "1.00"
+    # (Optional) Set diagonal to 1.0 correlation
     for col in all_cols:
         df_matrix.loc[col, col] = 1.0
-        df_annot.loc[col, col] = "1.00"
 
     # 4) Plot the heatmap (no plt.show())
     plt.figure(figsize=(10, 8))
     sns.heatmap(
         df_matrix,
-        annot=df_annot,
-        fmt="",
+        annot=False,  # Disable text annotations
         cmap="coolwarm",
         square=True,
         center=0.0,
         vmin=-1,
         vmax=1,
     )
-    plt.title("Best Correlation Heatmap (with Lag Info)")
+    plt.title("Best Correlation Heatmap")
     plt.tight_layout()
 
     # Save the figure to disk
@@ -92,7 +77,7 @@ def create_best_correlation_heatmap(correlations_dict, output_file="heatmap.png"
     plt.close()  # Close the figure to free resources
 
 
-def in_depth_plot_scatter(df_info_list, output_file="in_depth_scatter.png"):
+def in_depth_plot_scatter(df_info_list, output_file="/tmp/in_depth_scatter.png"):
     """
     Accepts a list of TWO DataFrameInfo objects (each with one column),
     merges them, computes correlation, and returns:
@@ -161,7 +146,7 @@ def in_depth_plot_scatter(df_info_list, output_file="in_depth_scatter.png"):
     }
 
 
-def plot_lag_correlations(correlations_dict, output_dir="lag_plots"):
+def plot_lag_correlations(correlations_dict, output_dir="/tmp/lag_plots"):
     """
     For each pair of columns in 'correlations_dict', we look at 'lag_details'
     and group them by lag_unit (e.g., hours, days). Then we make a separate plot
@@ -174,10 +159,13 @@ def plot_lag_correlations(correlations_dict, output_dir="lag_plots"):
     """
     import os
     import matplotlib.pyplot as plt
+    import io
+    import base64
 
     os.makedirs(output_dir, exist_ok=True)
 
     seen_pairs = set()  # Track pairs we've already plotted
+    plot_images = {}  # Dictionary to store base64-encoded images
 
     for pair_name, info in correlations_dict.items():
         # Split on " and " to get the two column names.
@@ -231,4 +219,15 @@ def plot_lag_correlations(correlations_dict, output_dir="lag_plots"):
 
             plt.tight_layout()
             plt.savefig(filepath)
-            plt.close(fig)
+
+            # Save the figure to a buffer and encode it in base64
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png")
+            buf.seek(0)
+            img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+            plt.close(fig)  # Free resources
+
+            # Store the base64 image in the dictionary
+            plot_images[f"{pair_label}_{safe_unit}"] = img_base64
+
+    return plot_images

@@ -28,7 +28,7 @@ class CorrelationRequest(BaseModel):
 
 class CorrelateChildrenRequest(BaseModel):
     asset_id: int
-    lag: Optional[Dict[LagUnit, int]] = None
+    lags: Optional[List[Dict[LagUnit, int]]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
 

@@ -1,0 +1,222 @@
+openapi: 3.1.0
+info:
+  title: Correlation App API
+  description: API to manage and query correlations between assets.
+  version: 1.0.0
+servers:
+  - url: "https://{server}/v1"
+    variables:
+      server:
+        default: correlation
+  - url: "https://{environment}.eliona.io/apps/correlation/api/v1/"
+    variables:
+      environment:
+        default: name
+paths:
+  /correlate:
+    post:
+      summary: Correlate assets
+      description: Computes correlations between specified assets.
+      operationId: correlate_assets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrelationRequest'
+      responses:
+        '200':
+          description: Successfully computed correlations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssetAttribute'
+                  lags:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  correlation:
+                    type: object
+                    additionalProperties:
+                      type: number
+        '400':
+          description: Invalid request.
+        '500':
+          description: Error computing correlations.
+  /correlate-children:
+    post:
+      summary: Correlate asset children
+      description: Computes correlations between an asset and its children.
+      operationId: correlate_asset_children
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrelateChildrenRequest'
+      responses:
+        '200':
+          description: Successfully computed correlations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssetAttribute'
+                  lags:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  correlation:
+                    type: object
+                    additionalProperties:
+                      type: number
+        '400':
+          description: Invalid request.
+        '500':
+          description: Error computing correlations.
+  /in-depth-correlation:
+    post:
+      summary: In-depth correlation
+      description: Computes in-depth correlations between exactly two assets/attributes.
+      operationId: in_depth_correlation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrelationRequest'
+      responses:
+        '200':
+          description: Successfully computed in-depth correlations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssetAttribute'
+                  lags:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  correlation:
+                    type: object
+                    additionalProperties:
+                      type: number
+                  scatter_plot:
+                    type: string
+                    format: byte
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                  lag_plots:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      format: byte
+        '400':
+          description: Invalid request.
+        '500':
+          description: Error computing in-depth correlations.
+components:
+  schemas:
+    LagUnit:
+      type: string
+      enum:
+        - seconds
+        - minutes
+        - hours
+        - days
+        - months
+        - years
+    AssetAttribute:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+        attribute_name:
+          type: string
+          nullable: true
+      required:
+        - asset_id
+    CorrelationRequest:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetAttribute'
+        lags:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: integer
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - assets
+    CorrelateChildrenRequest:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+        lags:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: integer
+          nullable: true
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - asset_id

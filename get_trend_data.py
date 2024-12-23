@@ -4,10 +4,12 @@ from datetime import timedelta
 import eliona.api_client2
 from eliona.api_client2.rest import ApiException
 from eliona.api_client2.api.data_api import DataApi
+from eliona.api_client2.api.assets_api import AssetsApi
 import os
 import logging
 import pytz
 from datetime import datetime
+from api.models import AssetAttribute
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
@@ -18,6 +20,24 @@ configuration.api_key["ApiKeyAuth"] = os.getenv("API_TOKEN")
 # Create an instance of the API client
 api_client = eliona.api_client2.ApiClient(configuration)
 data_api = DataApi(api_client)
+assets_api = AssetsApi(api_client)
+
+
+def get_all_asset_children(asset_id):
+    try:
+        logger.info(f"Fetching all assets to find children for asset {asset_id}")
+        assets = assets_api.get_assets()
+        child_ids = [asset_id]  # Start with the parent asset_id
+
+        for asset in assets:
+            if asset_id in asset.locational_asset_id_path:
+                child_ids.append(asset.id)
+
+        logger.info(f"Found {len(child_ids) - 1} children for asset {asset_id}")
+        return [AssetAttribute(asset_id=child_id) for child_id in child_ids]
+    except ApiException as e:
+        logger.error(f"Exception when calling AssetsApi->get_assets: {e}")
+        return [AssetAttribute(asset_id=asset_id)]
 
 
 def get_trend_data(asset_id, start_date, end_date):

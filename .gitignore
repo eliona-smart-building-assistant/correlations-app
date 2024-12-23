@@ -1,2 +1,10 @@
+
+__pycache__
+*.pyc
+.env
+.vscode
+.git
+venv
 keys.txt
-__pycache__/
+.venv
+

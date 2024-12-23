@@ -1,0 +1,11 @@
+fastapi                    
+matplotlib                 
+numpy                
+pandas                     
+pip                        
+Python-Eliona-API-client-2 @ git+https://github.com/eliona-smart-building-assistant/python-eliona-api-client2.git@b0cf05b941839e9fbb28d5ece0c4cc9648a13279
+pytz                       
+scipy                      
+seaborn                   
+uvicorn                   
+pyyaml
