@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from datetime import timedelta
 import eliona.api_client2
 from eliona.api_client2.rest import ApiException
@@ -7,8 +6,7 @@ from eliona.api_client2.api.data_api import DataApi
 from eliona.api_client2.api.assets_api import AssetsApi
 import os
 import logging
-import pytz
-from datetime import datetime
+
 from api.models import AssetAttribute
 
 # Initialize the logger

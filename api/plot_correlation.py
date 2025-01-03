@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
 import io
-import os
 
 
 def create_best_correlation_heatmap(correlations_dict, output_file="/tmp/heatmap.png"):
@@ -166,6 +165,7 @@ def plot_lag_correlations(correlations_dict, output_dir="/tmp/lag_plots"):
 
     seen_pairs = set()  # Track pairs we've already plotted
     plot_images = {}  # Dictionary to store base64-encoded images
+    plot_filenames = []  # List to store filenames of generated plots
 
     for pair_name, info in correlations_dict.items():
         # Split on " and " to get the two column names.
@@ -219,6 +219,7 @@ def plot_lag_correlations(correlations_dict, output_dir="/tmp/lag_plots"):
 
             plt.tight_layout()
             plt.savefig(filepath)
+            plot_filenames.append(filename)  # Add filename to the list
 
             # Save the figure to a buffer and encode it in base64
             buf = io.BytesIO()
@@ -230,4 +231,4 @@ def plot_lag_correlations(correlations_dict, output_dir="/tmp/lag_plots"):
             # Store the base64 image in the dictionary
             plot_images[f"{pair_label}_{safe_unit}"] = img_base64
 
-    return plot_images
+    return plot_filenames

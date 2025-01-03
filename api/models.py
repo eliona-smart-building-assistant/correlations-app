@@ -1,8 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from typing import List, Dict, Optional
 from enum import Enum
 from datetime import datetime
-import pandas as pd
 
 
 class LagUnit(str, Enum):
@@ -24,6 +23,7 @@ class CorrelationRequest(BaseModel):
     lags: Optional[List[Dict[LagUnit, int]]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    to_email: Optional[str] = None
 
 
 class CorrelateChildrenRequest(BaseModel):
@@ -31,6 +31,7 @@ class CorrelateChildrenRequest(BaseModel):
     lags: Optional[List[Dict[LagUnit, int]]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    to_email: Optional[str] = None
 
 
 class CorrelationResult(BaseModel):

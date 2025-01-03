@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 import pytz
 
-from get_trend_data import fetch_pandas_data
+from api.get_trend_data import fetch_pandas_data
 from api.models import CorrelationRequest, LagUnit
 
 

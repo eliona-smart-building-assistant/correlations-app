@@ -8,5 +8,5 @@ def start_api():
     uvicorn.run("api.openapi:app", host="0.0.0.0", port=port)
 
 
-# Initialize()
+Initialize()
 start_api()
