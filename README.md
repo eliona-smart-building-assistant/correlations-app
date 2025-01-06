@@ -39,7 +39,7 @@ The Correlation App computes correlations between asset attributes with customiz
 - If only the asset ID is provided (without attribute names), the app correlates all attributes of that asset with each other.
 
 **Request Body**:
-"""
+```json
 {
     "assets": [
         {"asset_id": 867, "attribute_name": "energy_costs"},
@@ -56,7 +56,7 @@ The Correlation App computes correlations between asset attributes with customiz
     "end_time": "2024-12-31T23:59:59",
     "to_email": "samuel.tim@eliona.io"
 }
-"""
+```
 
 **Response**:
 - **200 OK**: Returns details including:
@@ -106,7 +106,7 @@ The following parameters can be included in the request body for correlation ana
 - **to_email**: (Optional) An email address to which the generated report will be sent as a PDF.
 
 ### Example Request
-"""
+```json
 {
     "assets": [
         {"asset_id": 123, "attribute_name": "temperature"},
@@ -121,7 +121,7 @@ The following parameters can be included in the request body for correlation ana
     "end_time": "2025-01-03T23:59:59",
     "to_email": "example@domain.com"
 }
-"""
+```
 
 ---
 
@@ -140,7 +140,7 @@ The response includes the results of the correlation analysis, including:
 - **report_html**: An HTML report with visualizations and analysis details, provided as a string.
 
 ### Example Response
-"""
+```json
 {
     "assets": [
         {"asset_id": 123, "attribute_name": "temperature"},
@@ -167,7 +167,7 @@ The response includes the results of the correlation analysis, including:
     },
     "report_html": "<!DOCTYPE html><html><head>...</head><body>...</body></html>"
 }
-"""
+```
 
 The response structure allows users to review the results programmatically or visually through the provided `report_html`.
 
