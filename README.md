@@ -41,20 +41,11 @@ The Correlation App computes correlations between asset attributes with customiz
 **Request Body**:
 ```json
 {
-    "assets": [
-        {"asset_id": 867, "attribute_name": "energy_costs"},
-        {"asset_id": 867, "attribute_name": "Wirkleistung"},
-        {"asset_id": 867, "attribute_name": "Strom"}
-    ],
-    "lags": [
-        {"minutes": 5},
-        {"hours": 10},
-        {"days": 10},
-        {"months": 12}
-    ],
-    "start_time": "2024-11-01T00:00:00",
-    "end_time": "2024-12-31T23:59:59",
-    "to_email": "samuel.tim@eliona.io"
+    "assets": ,
+    "lags": ,
+    "start_time":,
+    "end_time": ,
+    "to_email": ,
 }
 ```
 
