@@ -22,7 +22,7 @@ The Correlation App computes correlations between asset attributes with customiz
 | `CONNECTION_STRING`  | Configures the Eliona database connection.                         | `postgres://user:pass@host:port/dbname` |
 | `API_ENDPOINT`       | API endpoint for accessing Eliona services.                        | `http://api-v2:3000/v2`                 |
 | `API_TOKEN`          | Authentication token for accessing Eliona services.                | `your_api_token`                        |
-| `API_SERVER_PORT`    | (Optional) Port for running the API server. Default: `3000`.       | `3001`                                  |
+| `API_SERVER_PORT`    | (Optional) Port for running the API server. Default: `3000`.       | `3000`                                  |
 | `SMTP_SERVER`        | SMTP server address.                                               | `smtp.example.com`                      |
 | `SMTP_PORT`          | SMTP server port.                                                  | `587`                                   |
 | `SMTP_USER`          | SMTP username.                                                     | `user@example.com`                      |
