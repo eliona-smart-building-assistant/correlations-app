@@ -63,7 +63,10 @@ def get_data(request: CorrelationRequest):
     data_frame_infos = []
 
     for df in data_frames:
-        frequency = pd.infer_freq(df.index)
+        if len(df.index) > 3:
+            frequency = pd.infer_freq(df.index)
+        else:
+            frequency = None
         if frequency is None:
             diffs = df.index.to_series().diff().dropna()
             if not diffs.empty:
@@ -271,4 +274,3 @@ def convert_correlations_to_dict(correlations):
             "lag_details": info["lag_details"],
         }
     return result
-
