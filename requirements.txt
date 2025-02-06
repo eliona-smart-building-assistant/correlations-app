@@ -10,3 +10,4 @@ seaborn
 uvicorn                   
 pyyaml
 weasyprint
+email-validator
