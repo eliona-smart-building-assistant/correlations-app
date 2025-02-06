@@ -1,7 +1,7 @@
 fastapi                    
 matplotlib                 
-numpy                
-pandas                     
+numpy==1.23.5
+pandas==1.5.3                   
 pip                        
 Python-Eliona-API-client-2 @ git+https://github.com/eliona-smart-building-assistant/python-eliona-api-client2.git@b0cf05b941839e9fbb28d5ece0c4cc9648a13279
 pytz                       
@@ -10,4 +10,4 @@ seaborn
 uvicorn                   
 pyyaml
 weasyprint
-email-validator
+email-validator>=2.0
