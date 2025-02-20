@@ -16,6 +16,7 @@ class LagUnit(str, Enum):
 class AssetAttribute(BaseModel):
     asset_id: int
     attribute_name: Optional[str] = None
+    diff: Optional[bool] = False
 
 
 class CorrelationRequest(BaseModel):
@@ -28,6 +29,7 @@ class CorrelationRequest(BaseModel):
 
 class CorrelateChildrenRequest(BaseModel):
     asset_id: int
+    diff: Optional[bool] = False
     lags: Optional[List[Dict[LagUnit, int]]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None

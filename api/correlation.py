@@ -46,6 +46,9 @@ def get_data(request: CorrelationRequest):
                 df.columns = [f"{asset.asset_id}_{asset.attribute_name}"]
                 df.dropna(inplace=True)  # Remove NaN values
                 data_frames.append(df)
+                if asset.diff:
+                    df = df.diff().dropna()
+                data_frames.append(df)
             else:
                 print(
                     f"Attribute '{asset.attribute_name}' not found in asset {asset.asset_id}. Skipping this attribute."
@@ -199,8 +202,11 @@ def compute_correlation(data_frame_infos, request: CorrelationRequest):
                             if merged.shape[0] < 2:
                                 current_corr = np.nan
                             else:
-                                current_corr = merged.corr().iloc[0, 1]
-
+                                corr_matrix = merged.corr(numeric_only=True)
+                                if corr_matrix.shape[1] > 1:
+                                    current_corr = corr_matrix.iloc[0, 1]
+                                else:
+                                    current_corr = np.nan
                             # Only store details if correlation is not null
                             if pd.notna(current_corr):
                                 corr_rounded = round(current_corr, 4)  # <-- round here

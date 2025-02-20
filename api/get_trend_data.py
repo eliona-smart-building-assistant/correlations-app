@@ -26,9 +26,10 @@ def get_all_asset_children(asset_id):
         logger.info(f"Fetching all assets to find children for asset {asset_id}")
         assets = assets_api.get_assets()
         child_ids = [asset_id]  # Start with the parent asset_id
-
+     
         for asset in assets:
-            if asset_id in asset.locational_asset_id_path:
+            # Make sure locational_asset_id_path is not None
+            if asset.locational_asset_id_path and asset_id in asset.locational_asset_id_path:
                 child_ids.append(asset.id)
 
         logger.info(f"Found {len(child_ids) - 1} children for asset {asset_id}")

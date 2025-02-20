@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from datetime import datetime
 import pytz
 import yaml
-from api.models import CorrelationRequest, CorrelateChildrenRequest
+from api.models import CorrelationRequest, CorrelateChildrenRequest, AssetAttribute
 from api.correlation import get_data, compute_correlation
 from api.plot_correlation import (
     create_best_correlation_heatmap,
@@ -80,8 +80,10 @@ def correlate_assets(request: CorrelationRequest):
 def correlate_asset_children(request: CorrelateChildrenRequest):
     child_asset_ids = get_all_asset_children(request.asset_id)
     print(f"Found {len(child_asset_ids)} children for asset {request.asset_id}")
+    assets = [AssetAttribute(asset_id=child_id.asset_id, diff=request.diff) for child_id in child_asset_ids]
+
     correlation_request = CorrelationRequest(
-        assets=child_asset_ids,
+        assets=assets,
         lags=request.lags,
         start_time=request.start_time,
         end_time=request.end_time,
