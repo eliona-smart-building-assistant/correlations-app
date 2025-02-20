@@ -45,7 +45,6 @@ def get_data(request: CorrelationRequest):
                 df.set_index("timestamp", inplace=True)
                 df.columns = [f"{asset.asset_id}_{asset.attribute_name}"]
                 df.dropna(inplace=True)  # Remove NaN values
-                data_frames.append(df)
                 if asset.diff:
                     df = df.diff().dropna()
                 data_frames.append(df)

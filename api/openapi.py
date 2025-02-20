@@ -117,6 +117,7 @@ def in_depth_correlation(request: CorrelationRequest):
 
     # 1) Fetch data
     df_infos = get_data(request)
+    print(df_infos)
     if len(df_infos) != 2:
         raise HTTPException(
             status_code=400,
