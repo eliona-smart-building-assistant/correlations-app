@@ -91,7 +91,7 @@ The Correlation App computes correlations between asset attributes with customiz
 
 The following parameters can be included in the request body for correlation analysis:
 
-- **assets**: A list of asset-attribute pairs for analysis. If only `asset_id` is provided, the app analyzes all attributes of the specified asset.
+- **assets**: A list of asset-attribute pairs for analysis. If only `asset_id` is provided, the app analyzes all attributes of the specified asset. If diff is true it will transform the data to be  the difference between consecutive and corelating that instead of just taking the normal data.
 - **lags**: Optional time lag intervals to include in the correlation analysis (e.g., `{"hours": 10}`).
 - **start_time**, **end_time**: The date range for the analysis.
 - **to_email**: (Optional) An email address to which the generated report will be sent as a PDF.
@@ -100,8 +100,8 @@ The following parameters can be included in the request body for correlation ana
 ```json
 {
     "assets": [
-        {"asset_id": 123, "attribute_name": "temperature"},
-        {"asset_id": 456, "attribute_name": "humidity"}
+        {"asset_id": 123, "attribute_name": "temperature", "diff": true},
+        {"asset_id": 456, "attribute_name": "humidity", "diff": false}
     ],
     "lags": [
         {"minutes": 15},
@@ -134,7 +134,7 @@ The response includes the results of the correlation analysis, including:
 ```json
 {
     "assets": [
-        {"asset_id": 123, "attribute_name": "temperature"},
+        {"asset_id": 123, "attribute_name": "temperature", "diff": true},
         {"asset_id": 456, "attribute_name": "humidity"}
     ],
     "lags": [
