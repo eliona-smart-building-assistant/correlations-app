@@ -60,18 +60,17 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-@app.post("/v1/create-correlation")
 def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db)):
     """
     Save a correlation request to the database.
     """
     try:
-        # Insert the request into the database
+        assets = [asset.model_dump() for asset in request.assets] if request.assets else []
         db.execute(
             CorrelationRequestTable.insert().values(
-                name = request.name,
-                assets=[asset.model_dump() for asset in request.assets],  # Convert assets to JSON
-                lags=request.lags,  # Lags as JSON
+                name=request.name,
+                assets=assets,  # Use empty list if assets not provided
+                lags=request.lags,
                 start_time=request.start_time,
                 end_time=request.end_time,
                 to_email=request.to_email,
@@ -124,15 +123,18 @@ def update_correlation(
         result = query.fetchone()
         if not result:
             raise HTTPException(status_code=404, detail="Correlation request not found.")
-
+        
+        # Convert assets to JSON if provided, else use empty list
+        assets = [asset.model_dump() for asset in request.assets] if request.assets else []
+        
         # Update the correlation request
         db.execute(
             CorrelationRequestTable.update()
             .where(CorrelationRequestTable.c.id == correlation_id)
             .values(
-                name = request.name,
-                assets=[asset.model_dump() for asset in request.assets],  # Convert assets to JSON
-                lags=request.lags,  # Lags as JSON
+                name=request.name,
+                assets=assets,
+                lags=request.lags,
                 start_time=request.start_time,
                 end_time=request.end_time,
                 to_email=request.to_email,
@@ -143,7 +145,6 @@ def update_correlation(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update correlation request: {str(e)}")
-    
 @app.get("/v1/get-correlation/{correlation_id}")
 def get_correlation(correlation_id: int, db: Session = Depends(get_db)):
     """
