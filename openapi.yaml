@@ -13,6 +13,107 @@ servers:
       environment:
         default: name
 paths:
+  /create-correlation:
+    post:
+      summary: Create correlation request
+      description: Save a correlation request to the database.
+      operationId: create_correlation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CorrelationRequest"
+      responses:
+        "200":
+          description: Correlation request saved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Failed to save correlation request.
+  /update-correlation/{correlation_id}:
+    put:
+      summary: Update correlation request
+      description: Update an existing correlation request in the database by its ID.
+      operationId: update_correlation
+      parameters:
+        - name: correlation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CorrelationRequest"
+      responses:
+        "200":
+          description: Correlation request updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Correlation request not found.
+        "500":
+          description: Failed to update correlation request.
+  /get-correlation/{correlation_id}:
+    get:
+      summary: Get correlation request
+      description: Retrieve a correlation request from the database by its ID.
+      operationId: get_correlation
+      parameters:
+        - name: correlation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully retrieved correlation request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  assets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AssetAttribute"
+                  lags:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  to_email:
+                    type: string
+                    format: email
+                  created_at:
+                    type: string
+                    format: date-time
+        "404":
+          description: Correlation request not found.
+        "500":
+          description: Failed to retrieve correlation request.
   /correlate/{correlation_id}:
     post:
       summary: Correlate assets
@@ -154,6 +255,29 @@ paths:
           description: Correlation request not found.
         "500":
           description: Error computing in-depth correlations.
+  /generate-report:
+    post:
+      summary: Generate report
+      description: Generate a PDF report for the correlation analysis.
+      operationId: generate_report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CorrelationRequest"
+      responses:
+        "200":
+          description: Successfully generated report.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid request (e.g., not exactly two assets).
+        "500":
+          description: Error generating report.
 components:
   schemas:
     LagUnit:
