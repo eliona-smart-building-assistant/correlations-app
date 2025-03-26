@@ -13,19 +13,19 @@ servers:
       environment:
         default: name
 paths:
-  /correlate:
+  /correlate/{correlation_id}:
     post:
       summary: Correlate assets
-      description: Computes correlations between specified assets.
+      description: Fetches correlation request by ID and computes correlations between specified assets.
       operationId: correlate_assets
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CorrelationRequest'
+      parameters:
+        - name: correlation_id
+          in: path
+          required: true
+          schema:
+            type: integer
       responses:
-        '200':
+        "200":
           description: Successfully computed correlations.
           content:
             application/json:
@@ -35,7 +35,7 @@ paths:
                   assets:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AssetAttribute'
+                      $ref: "#/components/schemas/AssetAttribute"
                   lags:
                     type: array
                     items:
@@ -52,23 +52,25 @@ paths:
                     type: object
                     additionalProperties:
                       type: number
-        '400':
-          description: Invalid request.
-        '500':
+                  report_html:
+                    type: string
+        "404":
+          description: Correlation request not found.
+        "500":
           description: Error computing correlations.
-  /correlate-children:
+  /correlate-children/{correlation_id}:
     post:
       summary: Correlate asset children
-      description: Computes correlations between an asset and its children.
+      description: Fetches correlation request by ID, retrieves child assets, and computes correlations.
       operationId: correlate_asset_children
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CorrelateChildrenRequest'
+      parameters:
+        - name: correlation_id
+          in: path
+          required: true
+          schema:
+            type: integer
       responses:
-        '200':
+        "200":
           description: Successfully computed correlations.
           content:
             application/json:
@@ -78,7 +80,7 @@ paths:
                   assets:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AssetAttribute'
+                      $ref: "#/components/schemas/AssetAttribute"
                   lags:
                     type: array
                     items:
@@ -95,23 +97,25 @@ paths:
                     type: object
                     additionalProperties:
                       type: number
-        '400':
-          description: Invalid request.
-        '500':
+                  report_html:
+                    type: string
+        "404":
+          description: Correlation request not found.
+        "500":
           description: Error computing correlations.
-  /in-depth-correlation:
+  /in-depth-correlation/{correlation_id}:
     post:
       summary: In-depth correlation
-      description: Computes in-depth correlations between exactly two assets/attributes.
+      description: Fetches correlation request by ID and computes in-depth correlations between exactly two assets/attributes.
       operationId: in_depth_correlation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CorrelationRequest'
+      parameters:
+        - name: correlation_id
+          in: path
+          required: true
+          schema:
+            type: integer
       responses:
-        '200':
+        "200":
           description: Successfully computed in-depth correlations.
           content:
             application/json:
@@ -121,7 +125,7 @@ paths:
                   assets:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AssetAttribute'
+                      $ref: "#/components/schemas/AssetAttribute"
                   lags:
                     type: array
                     items:
@@ -138,21 +142,17 @@ paths:
                     type: object
                     additionalProperties:
                       type: number
-                  scatter_plot:
-                    type: string
-                    format: byte
-                  columns:
+                  scatter_result_columns:
                     type: array
                     items:
                       type: string
-                  lag_plots:
-                    type: object
-                    additionalProperties:
-                      type: string
-                      format: byte
-        '400':
-          description: Invalid request.
-        '500':
+                  report_html:
+                    type: string
+        "400":
+          description: Invalid request (e.g., not exactly two assets).
+        "404":
+          description: Correlation request not found.
+        "500":
           description: Error computing in-depth correlations.
 components:
   schemas:
@@ -173,6 +173,9 @@ components:
         attribute_name:
           type: string
           nullable: true
+        diff:
+          type: boolean
+          nullable: true
       required:
         - asset_id
     CorrelationRequest:
@@ -181,7 +184,7 @@ components:
         assets:
           type: array
           items:
-            $ref: '#/components/schemas/AssetAttribute'
+            $ref: "#/components/schemas/AssetAttribute"
         lags:
           type: array
           items:
@@ -195,28 +198,10 @@ components:
         end_time:
           type: string
           format: date-time
+          nullable: true
+        to_email:
+          type: string
+          format: email
           nullable: true
       required:
         - assets
-    CorrelateChildrenRequest:
-      type: object
-      properties:
-        asset_id:
-          type: integer
-        lags:
-          type: array
-          items:
-            type: object
-            additionalProperties:
-              type: integer
-          nullable: true
-        start_time:
-          type: string
-          format: date-time
-          nullable: true
-        end_time:
-          type: string
-          format: date-time
-          nullable: true
-      required:
-        - asset_id
