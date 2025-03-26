@@ -206,7 +206,31 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         "correlation": correlations,
         "report_html": html_content,
     }
+@app.delete("/v1/delete-correlation/{correlation_id}")
 
+def delete_correlation(correlation_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a correlation request from the database by its ID.
+    """
+    try:
+        # Check if the correlation request exists
+        query = db.execute(
+            CorrelationRequestTable.select().where(CorrelationRequestTable.c.id == correlation_id)
+        )
+        result = query.fetchone()
+        if not result:
+            raise HTTPException(status_code=404, detail="Correlation request not found.")
+
+        # Delete the correlation request
+        db.execute(
+            CorrelationRequestTable.delete().where(CorrelationRequestTable.c.id == correlation_id)
+        )
+        db.commit()
+        return {"message": "Correlation request deleted successfully."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete correlation request: {str(e)}")
+    
 @app.post("/v1/correlate-children/{correlation_id}")
 def correlate_asset_children(correlation_id: int, db: Session = Depends(get_db)):
     """
