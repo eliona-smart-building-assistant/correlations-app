@@ -81,6 +81,7 @@ def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save correlation request: {str(e)}")
+    
 @app.get("/v1/get-all-correlations")
 def get_all_correlations(db: Session = Depends(get_db)):
     """
@@ -108,6 +109,7 @@ def get_all_correlations(db: Session = Depends(get_db)):
         return correlations
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve correlations: {str(e)}")
+    
 @app.put("/v1/update-correlation/{correlation_id}")
 def update_correlation(
     correlation_id: int, request: CorrelationRequest, db: Session = Depends(get_db)
@@ -145,6 +147,7 @@ def update_correlation(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update correlation request: {str(e)}")
+    
 @app.get("/v1/get-correlation/{correlation_id}")
 def get_correlation(correlation_id: int, db: Session = Depends(get_db)):
     """
@@ -233,8 +236,8 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         "correlation": correlations,
         "report_html": html_content,
     }
+    
 @app.delete("/v1/delete-correlation/{correlation_id}")
-
 def delete_correlation(correlation_id: int, db: Session = Depends(get_db)):
     """
     Delete a correlation request from the database by its ID.
