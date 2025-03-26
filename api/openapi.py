@@ -59,7 +59,7 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi
-
+@app.post("/v1/create-correlation")
 def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db)):
     """
     Save a correlation request to the database.
