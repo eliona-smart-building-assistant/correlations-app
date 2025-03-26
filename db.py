@@ -18,12 +18,12 @@ def create_schema_and_table():
         create_table_query = """
         CREATE TABLE IF NOT EXISTS correlations.requests (
             id SERIAL PRIMARY KEY,  
-            assers JSONB NOT NULL,
+            assets JSONB NOT NULL,
             lags JSONB,
             start_time TIMESTAMP,
             end_time TIMESTAMP,
             to_email VARCHAR(100),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """
         cursor.execute(create_table_query)
