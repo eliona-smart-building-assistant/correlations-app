@@ -39,23 +39,7 @@ def get_db():
     finally:
         db.close()
   
-def save_request_to_db(db: Session, request: CorrelationRequest):
-    try:
-        db.execute(
-            CorrelationRequestTable.insert().values(
-                assets=[asset.dict() for asset in request.assets],  # Convert assets to JSON
-                lags=request.lags,  # Lags as JSON
-                start_time=request.start_time,
-                end_time=request.end_time,
-                to_email=request.to_email,
-            )
-        )
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise e
-    finally:
-        db.close()
+
 app = FastAPI(
     title="Correlation App API",
     description="API to manage and query correlations between assets.",
@@ -85,6 +69,7 @@ def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db
         # Insert the request into the database
         db.execute(
             CorrelationRequestTable.insert().values(
+                name = request.name,
                 assets=[asset.model_dump() for asset in request.assets],  # Convert assets to JSON
                 lags=request.lags,  # Lags as JSON
                 start_time=request.start_time,
@@ -119,7 +104,8 @@ def update_correlation(
             CorrelationRequestTable.update()
             .where(CorrelationRequestTable.c.id == correlation_id)
             .values(
-                assets=[asset.dict() for asset in request.assets],  # Convert assets to JSON
+                name = request.name,
+                assets=[asset.model_dump() for asset in request.assets],  # Convert assets to JSON
                 lags=request.lags,  # Lags as JSON
                 start_time=request.start_time,
                 end_time=request.end_time,
@@ -148,6 +134,7 @@ def get_correlation(correlation_id: int, db: Session = Depends(get_db)):
         
         # Convert the result to a dictionary
         correlation_request = {
+            "name" : result.name,
             "id": result.id,
             "assets": result.assets,
             "lags": result.lags,
@@ -175,6 +162,7 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
 
     # Convert the result to a dictionary
     correlation_request = {
+        "name" : result.name,
         "assets": result.assets,
         "lags": result.lags,
         "start_time": result.start_time,
@@ -210,6 +198,7 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
     if correlation_request["to_email"]:
         send_evaluation_report_as_mail(pdf_file_path, correlation_request["to_email"])
     return {
+        "name": correlation_request["name"],
         "assets": correlation_request["assets"],
         "lags": correlation_request["lags"],
         "start_time": correlation_request["start_time"],
@@ -233,6 +222,7 @@ def correlate_asset_children(correlation_id: int, db: Session = Depends(get_db))
 
     # Convert the result to a dictionary
     correlation_request = {
+        "name" : result.name,
         "assets": result.assets,
         "lags": result.lags,
         "start_time": result.start_time,
@@ -257,6 +247,7 @@ def correlate_asset_children(correlation_id: int, db: Session = Depends(get_db))
     html_content = response["report_html"]
 
     return {
+        "name": correlation_request["name"],
         "assets": child_asset_ids,
         "lags": correlation_request["lags"],
         "start_time": correlation_request["start_time"],
@@ -280,6 +271,7 @@ def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
 
     # Convert the result to a dictionary
     correlation_request = {
+        "name" : result.name,
         "assets": result.assets,
         "lags": result.lags,
         "start_time": result.start_time,
@@ -335,6 +327,7 @@ def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
     if correlation_request["to_email"]:
         send_evaluation_report_as_mail(pdf_file_path, correlation_request["to_email"])
     return {
+        "name": correlation_request["name"],
         "assets": correlation_request["assets"],
         "lags": correlation_request["lags"],
         "start_time": correlation_request["start_time"],

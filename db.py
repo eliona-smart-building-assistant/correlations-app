@@ -18,7 +18,8 @@ def create_schema_and_table():
         create_table_query = """
         CREATE TABLE IF NOT EXISTS correlations.requests (
             id SERIAL PRIMARY KEY,  
-            assets JSONB NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            assets JSONB ,
             lags JSONB,
             start_time TIMESTAMP,
             end_time TIMESTAMP,

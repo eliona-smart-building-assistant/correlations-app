@@ -20,7 +20,8 @@ class AssetAttribute(BaseModel):
 
 
 class CorrelationRequest(BaseModel):
-    assets: List[AssetAttribute]
+    name: str
+    assets: Optional[List[AssetAttribute]] = None
     lags: Optional[List[Dict[LagUnit, int]]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
