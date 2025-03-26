@@ -255,7 +255,8 @@ def correlate_asset_children(correlation_id: int, db: Session = Depends(get_db))
         "correlation": correlations,
         "report_html": html_content,
     }
-    
+     
+     
 @app.post("/v1/in-depth-correlation/{correlation_id}")
 def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
     """
