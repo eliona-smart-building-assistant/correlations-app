@@ -82,7 +82,33 @@ def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save correlation request: {str(e)}")
+@app.get("/v1/get-all-correlations")
+def get_all_correlations(db: Session = Depends(get_db)):
+    """
+    Retrieve all correlation requests from the database.
+    """
+    try:
+        # Query the database for all correlation requests
+        query = db.execute(CorrelationRequestTable.select())
+        results = query.fetchall()
 
+        # Convert the results to a list of dictionaries
+        correlations = [
+            {
+                "id": result.id,
+                "name": result.name,
+                "assets": result.assets,
+                "lags": result.lags,
+                "start_time": result.start_time,
+                "end_time": result.end_time,
+                "to_email": result.to_email,
+                "created_at": result.created_at,
+            }
+            for result in results
+        ]
+        return correlations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve correlations: {str(e)}")
 @app.put("/v1/update-correlation/{correlation_id}")
 def update_correlation(
     correlation_id: int, request: CorrelationRequest, db: Session = Depends(get_db)
