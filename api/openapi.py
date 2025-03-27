@@ -191,8 +191,8 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Correlation request not found.")
 
     # Convert the result to a dictionary
-    correlation_request = {
-        "name" : result.name,
+    correlation_request_dict = {
+        "name": result.name,
         "assets": result.assets,
         "lags": result.lags,
         "start_time": result.start_time,
@@ -200,10 +200,13 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         "to_email": result.to_email,
     }
 
-    # Process the correlation request
-    end_time = correlation_request["end_time"] or datetime.now()
-    dataframes = get_data(correlation_request)
-    correlations = compute_correlation(dataframes, correlation_request)
+    # Convert the dict to a CorrelationRequest model
+    correlation_request_obj = CorrelationRequest.parse_obj(correlation_request_dict)
+
+    # Process the correlation request using the pydantic model
+    end_time = correlation_request_obj.end_time or datetime.now()
+    dataframes = get_data(correlation_request_obj)
+    correlations = compute_correlation(dataframes, correlation_request_obj)
     create_best_correlation_heatmap(correlations)
 
     include_heatmap: bool = True
@@ -213,8 +216,8 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
 
     pdf_file_path = "/tmp/correlation_report.pdf"
     create_pdf(
-        correlation_request["start_time"],
-        correlation_request["end_time"],
+        correlation_request_obj.start_time,
+        correlation_request_obj.end_time,
         pdf_file_path,
         correlations,
         include_heatmap,
@@ -225,13 +228,13 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
     html_file_path = "/tmp/report.html"
     with open(html_file_path, "r", encoding="utf-8") as html_file:
         html_content = html_file.read()
-    if correlation_request["to_email"]:
-        send_evaluation_report_as_mail(pdf_file_path, correlation_request["to_email"])
+    if correlation_request_obj.to_email:
+        send_evaluation_report_as_mail(pdf_file_path, correlation_request_obj.to_email)
     return {
-        "name": correlation_request["name"],
-        "assets": correlation_request["assets"],
-        "lags": correlation_request["lags"],
-        "start_time": correlation_request["start_time"],
+        "name": correlation_request_obj.name,
+        "assets": correlation_request_obj.assets,
+        "lags": correlation_request_obj.lags,
+        "start_time": correlation_request_obj.start_time,
         "end_time": end_time,
         "correlation": correlations,
         "report_html": html_content,
@@ -324,28 +327,28 @@ def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
     if not result:
         raise HTTPException(status_code=404, detail="Correlation request not found.")
 
-    # Convert the result to a dictionary
-    correlation_request = {
-        "name" : result.name,
+    # Convert the result to a dictionary and then to a pydantic model
+    correlation_request_obj = CorrelationRequest.parse_obj({
+        "name": result.name,
         "assets": result.assets,
         "lags": result.lags,
         "start_time": result.start_time,
         "end_time": result.end_time,
         "to_email": result.to_email,
-    }
+    })
 
-    if len(correlation_request["assets"]) != 2:
+    if len(correlation_request_obj.assets or []) != 2:
         raise HTTPException(status_code=400, detail="Exactly two assets are required.")
 
-    # Process the correlation request
-    df_infos = get_data(correlation_request)
+    # Process the correlation request using the pydantic model
+    df_infos = get_data(correlation_request_obj)
     if len(df_infos) != 2:
         raise HTTPException(
             status_code=400,
             detail="Could not retrieve data for both assets/attributes. Check logs.",
         )
 
-    correlations = compute_correlation(df_infos, correlation_request)
+    correlations = compute_correlation(df_infos, correlation_request_obj)
 
     lag_plot_filenames = plot_lag_correlations(
         correlations, output_dir="/tmp/lag_plots"
@@ -365,8 +368,8 @@ def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
 
     pdf_file_path = "/tmp/correlation_report.pdf"
     create_pdf(
-        correlation_request["start_time"],
-        correlation_request["end_time"],
+        correlation_request_obj.start_time,
+        correlation_request_obj.end_time,
         pdf_file_path,
         correlations,
         include_heatmap,
@@ -379,14 +382,14 @@ def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
     with open(html_file_path, "r", encoding="utf-8") as html_file:
         html_content = html_file.read()
 
-    if correlation_request["to_email"]:
-        send_evaluation_report_as_mail(pdf_file_path, correlation_request["to_email"])
+    if correlation_request_obj.to_email:
+        send_evaluation_report_as_mail(pdf_file_path, correlation_request_obj.to_email)
     return {
-        "name": correlation_request["name"],
-        "assets": correlation_request["assets"],
-        "lags": correlation_request["lags"],
-        "start_time": correlation_request["start_time"],
-        "end_time": correlation_request["end_time"],
+        "name": correlation_request_obj.name,
+        "assets": correlation_request_obj.assets,
+        "lags": correlation_request_obj.lags,
+        "start_time": correlation_request_obj.start_time,
+        "end_time": correlation_request_obj.end_time,
         "correlation": correlations,
         "scatter_result_columns": scatter_result["columns"],
         "report_html": html_content,
