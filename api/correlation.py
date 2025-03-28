@@ -165,10 +165,11 @@ def compute_correlation(data_frame_infos, request: CorrelationRequest):
                 left_df = df_info1.dataframe
                 right_df = df_info2.dataframe
                 tolerance = None
-
+            best_merged = None
             # If no lags, do a single "merge_asof" nearest match
             if not request.lags:
                 merged = merge_with_nearest(left_df, right_df, tolerance=tolerance)
+                best_merged = merged
                 if merged.shape[0] > 1:
                     # Round the correlation
                     best_correlation = round(merged.corr().iloc[0, 1], 4)
@@ -224,6 +225,7 @@ def compute_correlation(data_frame_infos, request: CorrelationRequest):
                                     best_correlation = corr_rounded
                                     best_lag = step
                                     best_lag_unit = lag_unit
+                                    best_merged = merged
 
             correlation_details[(col1, col2)] = {
                 "best_correlation": (
@@ -232,6 +234,7 @@ def compute_correlation(data_frame_infos, request: CorrelationRequest):
                 "best_lag": best_lag,
                 "best_lag_unit": best_lag_unit,
                 "lag_details": lag_details,
+                "merged_data": best_merged.reset_index().to_dict(orient="records") if best_merged is not None else None,
             }
 
     correlations = convert_correlations_to_dict(correlation_details)
