@@ -279,11 +279,11 @@ def convert_correlations_to_dict(correlations):
         # Extract asset ID and attribute name from the column names
         asset1_id, asset1_attribute = col1.split("_", 1)
         asset2_id, asset2_attribute = col2.split("_", 1)
-
+        
         # Append a dictionary for each correlation
         result.append({
-            "asset_1": {"id": asset1_id, "attribute": asset1_attribute},
-            "asset_2": {"id": asset2_id, "attribute": asset2_attribute},
+            "asset_1": {"asset_id": int(asset1_id), "attribute": asset1_attribute},
+            "asset_2": {"asset_id": int(asset2_id), "attribute": asset2_attribute},
             "best_correlation": info["best_correlation"],
             "best_lag": info["best_lag"],
             "lag_unit": info["best_lag_unit"],
