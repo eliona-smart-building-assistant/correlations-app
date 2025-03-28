@@ -1,19 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends
 
 from datetime import datetime
-import pytz
 import yaml
-from api.models import CorrelationRequest, CorrelateChildrenRequest, AssetAttribute
+from api.models import CorrelationRequest, AssetAttribute
 from api.correlation import get_data, compute_correlation
-from api.plot_correlation import (
-    create_best_correlation_heatmap,
-    in_depth_plot_scatter,
-    plot_lag_correlations,
-)
+
 from api.get_trend_data import get_all_asset_children
-from api.pdf_template import create_pdf
-from fastapi.responses import FileResponse
-from api.sendEmail import send_evaluation_report_as_mail
 import os
 from sqlalchemy import (
     MetaData,
@@ -51,7 +43,23 @@ app = FastAPI(
 # Load custom OpenAPI schema
 with open("openapi.yaml", "r") as f:
     openapi_yaml = yaml.safe_load(f)
-
+    
+def process_correlation(correlation_request_obj, db: Session):
+    # If there's exactly one asset and no attribute defined, process children
+    if len(correlation_request_obj.assets) == 1 and not correlation_request_obj.assets[0].attribute_name:
+        child_asset_ids = get_all_asset_children(correlation_request_obj["assets"][0]["asset_id"])
+        print(f"Found {len(child_asset_ids)} children for asset {correlation_request_obj['assets'][0]['asset_id']}")
+        assets = [
+            AssetAttribute(asset_id=child_id.asset_id, diff=correlation_request_obj["assets"][0].get("diff", False))
+            for child_id in child_asset_ids
+        ]
+        correlation_request_obj["assets"] = [asset.model_dump() for asset in assets]
+        # Now, call process_correlation recursively
+        return process_correlation(correlation_request_obj, db)
+    else:
+        dataframes = get_data(correlation_request_obj)
+        correlations = compute_correlation(dataframes, correlation_request_obj)
+        return correlations
 
 def custom_openapi():
     app.openapi_schema = openapi_yaml
@@ -179,9 +187,6 @@ def get_correlation(correlation_id: int, db: Session = Depends(get_db)):
     
 @app.post("/v1/correlate/{correlation_id}")
 def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
-    """
-    Fetch correlation request by ID and process it.
-    """
     # Retrieve the correlation request from the database
     query = db.execute(
         CorrelationRequestTable.select().where(CorrelationRequestTable.c.id == correlation_id)
@@ -189,8 +194,6 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
     result = query.fetchone()
     if not result:
         raise HTTPException(status_code=404, detail="Correlation request not found.")
-
-    # Convert the result to a dictionary
     correlation_request_dict = {
         "name": result.name,
         "assets": result.assets,
@@ -199,37 +202,9 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         "end_time": result.end_time,
         "to_email": result.to_email,
     }
-
-    # Convert the dict to a CorrelationRequest model
-    correlation_request_obj = CorrelationRequest.parse_obj(correlation_request_dict)
-
-    # Process the correlation request using the pydantic model
+    correlation_request_obj = CorrelationRequest.model_validate(correlation_request_dict)
+    correlations = process_correlation(correlation_request_obj, db)
     end_time = correlation_request_obj.end_time or datetime.now()
-    dataframes = get_data(correlation_request_obj)
-    correlations = compute_correlation(dataframes, correlation_request_obj)
-    create_best_correlation_heatmap(correlations)
-
-    include_heatmap: bool = True
-    include_scatter: bool = False
-    include_lag_plots: bool = False
-    include_details: bool = True
-
-    pdf_file_path = "/tmp/correlation_report.pdf"
-    create_pdf(
-        correlation_request_obj.start_time,
-        correlation_request_obj.end_time,
-        pdf_file_path,
-        correlations,
-        include_heatmap,
-        include_scatter,
-        include_lag_plots,
-        include_details,
-    )
-    html_file_path = "/tmp/report.html"
-    with open(html_file_path, "r", encoding="utf-8") as html_file:
-        html_content = html_file.read()
-    if correlation_request_obj.to_email:
-        send_evaluation_report_as_mail(pdf_file_path, correlation_request_obj.to_email)
     return {
         "name": correlation_request_obj.name,
         "assets": correlation_request_obj.assets,
@@ -237,7 +212,6 @@ def correlate_assets(correlation_id: int, db: Session = Depends(get_db)):
         "start_time": correlation_request_obj.start_time,
         "end_time": end_time,
         "correlation": correlations,
-        "report_html": html_content,
     }
     
 @app.delete("/v1/delete-correlation/{correlation_id}")
@@ -263,187 +237,4 @@ def delete_correlation(correlation_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete correlation request: {str(e)}")
-    
-@app.post("/v1/correlate-children/{correlation_id}")
-def correlate_asset_children(correlation_id: int, db: Session = Depends(get_db)):
-    """
-    Fetch correlation request by ID, retrieve child assets, and process it.
-    """
-    # Retrieve the correlation request from the database
-    query = db.execute(
-        CorrelationRequestTable.select().where(CorrelationRequestTable.c.id == correlation_id)
-    )
-    result = query.fetchone()
-    if not result:
-        raise HTTPException(status_code=404, detail="Correlation request not found.")
-
-    # Convert the result to a dictionary
-    correlation_request = {
-        "name" : result.name,
-        "assets": result.assets,
-        "lags": result.lags,
-        "start_time": result.start_time,
-        "end_time": result.end_time,
-        "to_email": result.to_email,
-    }
-
-    # Retrieve child assets
-    child_asset_ids = get_all_asset_children(correlation_request["assets"][0]["asset_id"])
-    print(f"Found {len(child_asset_ids)} children for asset {correlation_request['assets'][0]['asset_id']}")
-    assets = [
-        AssetAttribute(asset_id=child_id.asset_id, diff=correlation_request["assets"][0].get("diff", False))
-        for child_id in child_asset_ids
-    ]
-
-    # Update the correlation request with child assets
-    correlation_request["assets"] = [asset.dict() for asset in assets]
-
-    # Process the correlation request
-    response = correlate_assets(correlation_id, db)
-    correlations = response["correlation"]
-    html_content = response["report_html"]
-
-    return {
-        "name": correlation_request["name"],
-        "assets": child_asset_ids,
-        "lags": correlation_request["lags"],
-        "start_time": correlation_request["start_time"],
-        "end_time": correlation_request["end_time"],
-        "correlation": correlations,
-        "report_html": html_content,
-    }
-     
-     
-@app.post("/v1/in-depth-correlation/{correlation_id}")
-def in_depth_correlation(correlation_id: int, db: Session = Depends(get_db)):
-    """
-    Fetch correlation request by ID and process it for in-depth correlation.
-    """
-    # Retrieve the correlation request from the database
-    query = db.execute(
-        CorrelationRequestTable.select().where(CorrelationRequestTable.c.id == correlation_id)
-    )
-    result = query.fetchone()
-    if not result:
-        raise HTTPException(status_code=404, detail="Correlation request not found.")
-
-    # Convert the result to a dictionary and then to a pydantic model
-    correlation_request_obj = CorrelationRequest.parse_obj({
-        "name": result.name,
-        "assets": result.assets,
-        "lags": result.lags,
-        "start_time": result.start_time,
-        "end_time": result.end_time,
-        "to_email": result.to_email,
-    })
-
-    if len(correlation_request_obj.assets or []) != 2:
-        raise HTTPException(status_code=400, detail="Exactly two assets are required.")
-
-    # Process the correlation request using the pydantic model
-    df_infos = get_data(correlation_request_obj)
-    if len(df_infos) != 2:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not retrieve data for both assets/attributes. Check logs.",
-        )
-
-    correlations = compute_correlation(df_infos, correlation_request_obj)
-
-    lag_plot_filenames = plot_lag_correlations(
-        correlations, output_dir="/tmp/lag_plots"
-    )
-
-    try:
-        scatter_result = in_depth_plot_scatter(
-            df_infos, output_file="/tmp/in_depth_scatter.png"
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    include_heatmap: bool = False
-    include_scatter: bool = True
-    include_lag_plots: bool = True
-    include_details: bool = True
-
-    pdf_file_path = "/tmp/correlation_report.pdf"
-    create_pdf(
-        correlation_request_obj.start_time,
-        correlation_request_obj.end_time,
-        pdf_file_path,
-        correlations,
-        include_heatmap,
-        include_scatter,
-        include_lag_plots,
-        include_details,
-        lag_plot_filenames,
-    )
-    html_file_path = "/tmp/report.html"
-    with open(html_file_path, "r", encoding="utf-8") as html_file:
-        html_content = html_file.read()
-
-    if correlation_request_obj.to_email:
-        send_evaluation_report_as_mail(pdf_file_path, correlation_request_obj.to_email)
-    return {
-        "name": correlation_request_obj.name,
-        "assets": correlation_request_obj.assets,
-        "lags": correlation_request_obj.lags,
-        "start_time": correlation_request_obj.start_time,
-        "end_time": correlation_request_obj.end_time,
-        "correlation": correlations,
-        "scatter_result_columns": scatter_result["columns"],
-        "report_html": html_content,
-    }
-
-@app.post("/v1/generate-report")
-def generate_report(request: CorrelationRequest):
-    """
-    Generate a PDF report for the correlation analysis.
-    """
-    include_heatmap: bool = False
-    include_scatter: bool = True
-    include_lag_plots: bool = True
-    include_details: bool = True
-    if len(request.assets) != 2:
-        raise HTTPException(status_code=400, detail="Exactly two assets are required.")
-
-    # 1) Fetch data
-    df_infos = get_data(request)
-    if len(df_infos) != 2:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not retrieve data for both assets/attributes. Check logs.",
-        )
-
-    correlations = compute_correlation(df_infos, request)
-
-    lag_plot_filenames = plot_lag_correlations(
-        correlations, output_dir="/tmp/lag_plots"
-    )
-
-    try:
-        scatter_result = in_depth_plot_scatter(
-            df_infos, output_file="/tmp/in_depth_scatter.png"
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    end_time = request.end_time or datetime.now(pytz.timezone("Europe/Berlin"))
-
-    pdf_file_path = "/tmp/correlation_report.pdf"
-    create_pdf(
-        request.start_time,
-        request.end_time,
-        pdf_file_path,
-        correlations,
-        include_heatmap,
-        include_scatter,
-        include_lag_plots,
-        include_details,
-        lag_plot_filenames,
-    )
-    if request.to_email:
-        send_evaluation_report_as_mail(pdf_file_path, request.to_email)
-    return FileResponse(
-        pdf_file_path, media_type="application/pdf", filename="correlation_report.pdf"
-    )
+  
