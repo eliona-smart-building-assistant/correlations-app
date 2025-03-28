@@ -288,5 +288,6 @@ def convert_correlations_to_dict(correlations):
             "best_lag": info["best_lag"],
             "lag_unit": info["best_lag_unit"],
             "lag_details": info["lag_details"],
+            "merged_data": info.get("merged_data")
         })
     return result
