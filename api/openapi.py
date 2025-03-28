@@ -47,14 +47,17 @@ with open("openapi.yaml", "r") as f:
 def process_correlation(correlation_request_obj, db: Session):
     # If there's exactly one asset and no attribute defined, process children
     if len(correlation_request_obj.assets) == 1 and not correlation_request_obj.assets[0].attribute_name:
-        child_asset_ids = get_all_asset_children(correlation_request_obj["assets"][0]["asset_id"])
-        print(f"Found {len(child_asset_ids)} children for asset {correlation_request_obj['assets'][0]['asset_id']}")
+        child_asset_ids = get_all_asset_children(correlation_request_obj.assets[0].asset_id)
+        print(f"Found {len(child_asset_ids)} children for asset {correlation_request_obj.assets[0].asset_id}")
         assets = [
-            AssetAttribute(asset_id=child_id.asset_id, diff=correlation_request_obj["assets"][0].get("diff", False))
+            AssetAttribute(
+                asset_id=child_id.asset_id,
+                diff=correlation_request_obj.assets[0].diff     # use attribute access!
+            )
             for child_id in child_asset_ids
         ]
-        correlation_request_obj["assets"] = [asset.model_dump() for asset in assets]
-        # Now, call process_correlation recursively
+        # Update assets attribute of the model (if needed, convert each to dict)
+        correlation_request_obj.assets = [asset.model_dump() for asset in assets]
         return process_correlation(correlation_request_obj, db)
     else:
         dataframes = get_data(correlation_request_obj)
