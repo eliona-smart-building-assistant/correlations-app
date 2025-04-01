@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 
 from datetime import datetime
 import yaml
-from api.models import CorrelationRequest, AssetAttribute
+from api.models import CorrelationRequest, AssetAttribute,CorrelationCreateRequest
 from api.correlation import get_data, compute_correlation
 
 from api.get_trend_data import get_all_asset_children
@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
-
+from create_asset import create_asset_to_save_reports
 
 DATABASE_URL = os.getenv("CONNECTION_STRING")
 db_url_sql = DATABASE_URL.replace("postgres", "postgresql")
@@ -71,24 +71,32 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 @app.post("/v1/create-correlation")
-def create_correlation(request: CorrelationRequest, db: Session = Depends(get_db)):
+def create_correlation(request: CorrelationCreateRequest, db: Session = Depends(get_db)):
     """
     Save a correlation request to the database.
     """
     try:
         assets = [asset.model_dump() for asset in request.assets] if request.assets else []
-        db.execute(
-            CorrelationRequestTable.insert().values(
+        insert_stmt = (
+            CorrelationRequestTable.insert()
+            .values(
                 name=request.name,
-                assets=assets,  # Use empty list if assets not provided
+                assets=assets,
                 lags=request.lags,
                 start_time=request.start_time,
                 end_time=request.end_time,
                 to_email=request.to_email,
             )
+            .returning(CorrelationRequestTable.c.id)
         )
+        result = db.execute(insert_stmt)
+        new_id = result.fetchone()[0]
         db.commit()
-        return {"message": "Correlation request saved successfully."}
+        
+        create_asset_to_save_reports(
+            project_id=request.project_id, correlation_id=new_id
+        )
+        return {"message": "Correlation request saved successfully.", "id": new_id}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save correlation request: {str(e)}")

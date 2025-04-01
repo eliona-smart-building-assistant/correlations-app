@@ -27,6 +27,14 @@ class CorrelationRequest(BaseModel):
     end_time: Optional[datetime] = None
     to_email: Optional[str] = None
 
+class CorrelationCreateRequest(BaseModel):
+    name: str
+    assets: Optional[List[AssetAttribute]] = None
+    lags: Optional[List[Dict[LagUnit, int]]] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    to_email: Optional[str] = None
+    project_id: Optional[int] = 1
 
 class CorrelateChildrenRequest(BaseModel):
     asset_id: int
