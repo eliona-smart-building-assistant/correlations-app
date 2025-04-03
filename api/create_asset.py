@@ -24,6 +24,7 @@ def create_asset_to_save_reports(project_id, correlation_id):
     with ApiClient(configuration) as api_client:
         assets_api = AssetsApi(api_client)
         gai_name = f"correlation_reports_{correlation_id}"
+        project_id=str(project_id),
         asset = Asset(
             global_asset_identifier=gai_name,
             project_id=project_id,
