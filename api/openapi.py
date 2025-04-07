@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
-from create_asset import create_asset_to_save_reports
+from api.create_asset import create_asset_to_save_reports
 
 DATABASE_URL = os.getenv("CONNECTION_STRING")
 db_url_sql = DATABASE_URL.replace("postgres", "postgresql")

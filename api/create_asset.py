@@ -20,18 +20,17 @@ assets_api = AssetsApi(api_client)
 
 
 def create_asset_to_save_reports(project_id, correlation_id):
-
     with ApiClient(configuration) as api_client:
         assets_api = AssetsApi(api_client)
         gai_name = f"correlation_reports_{correlation_id}"
+        project_id_str = str(project_id)  # Convert project_id to string
         asset = Asset(
-            global_asset_identifier=gai_name,
-            project_id=project_id,
-            asset_type="Space",
+            globalAssetIdentifier=gai_name,
+            projectId=project_id_str,  # Now a string, not a tuple
+            assetType="Space",
             name=gai_name,
             description="This asset is used to store the Reports of the correlation",
         )
-
         asset = assets_api.put_asset(asset)
         print(asset)
         return asset
