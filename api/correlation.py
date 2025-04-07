@@ -146,8 +146,7 @@ def compute_correlation(data_frame_infos, request: CorrelationRequest):
         for j, df_info2 in enumerate(data_frame_infos):
             col1 = df_info1.dataframe.columns[0]
             col2 = df_info2.dataframe.columns[0]
-            if col1 == col2:
-                continue
+
             # Determine which DF is "higher frequency" (smaller time delta)
             freq1 = frequency_to_timedelta(df_info1.frequency)
             freq2 = frequency_to_timedelta(df_info2.frequency)
